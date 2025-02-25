@@ -8,10 +8,10 @@ st.sidebar.image("https://fiaks.com/wp-content/uploads/2019/04/Suryoday-Final-Lo
 
 # MySQL connection configuration
 db_config = {
-    "host": "localhost",
-    "user": "root",
-    "password": "gaurav@16",
-    "database": "bank_db",
+    "host": "database-1.chm6ogy0g0j4.eu-north-1.rds.amazonaws.com",
+    "user": "admin",
+    "password": "Gaurav#Khole",
+    "database": "database-1",
     "cursorclass": pymysql.cursors.DictCursor
 }
 
