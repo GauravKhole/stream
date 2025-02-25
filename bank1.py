@@ -11,10 +11,10 @@ st.sidebar.image("https://fiaks.com/wp-content/uploads/2019/04/Suryoday-Final-Lo
 
 # AWS RDS MySQL connection configuration
 db_config = {
-    "host": "database-1.chm6ogy0g0j4.eu-north-1.rds.amazonaws.com",  # Your RDS endpoint
+    "host": "database-2.chm6ogy0g0j4.eu-north-1.rds.amazonaws.com",  # Your RDS endpoint
     "user": "admin",                                                # Your RDS username
     "password": "Gaurav#Khole",                                       # Your RDS password
-    "database": "database-1",                                         # Your database name
+    "database": "bank_db",                                         # Your database name
     "cursorclass": pymysql.cursors.DictCursor,
     "port": 3306,                                                   # Default MySQL port
     "connect_timeout": 10                                             # Optional: increase timeout if needed
