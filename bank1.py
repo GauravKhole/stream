@@ -2,27 +2,35 @@ import streamlit as st
 import pymysql
 from datetime import datetime
 
-# Adding a logo on the left corner 
-st.set_page_config(page_title="Bank Customer Management System", page_icon="https://fiaks.com/wp-content/uploads/2019/04/Suryoday-Final-Logo.jpg")
+# Configure the Streamlit page
+st.set_page_config(
+    page_title="Bank Customer Management System",
+    page_icon="https://fiaks.com/wp-content/uploads/2019/04/Suryoday-Final-Logo.jpg"
+)
 st.sidebar.image("https://fiaks.com/wp-content/uploads/2019/04/Suryoday-Final-Logo.jpg", width=300)
 
-# MySQL connection configuration
+# AWS RDS MySQL connection configuration
 db_config = {
-    "host": "database-1.chm6ogy0g0j4.eu-north-1.rds.amazonaws.com",
-    "user": "admin",
-    "password": "Gaurav#Khole",
-    "database": "database-1",
-    "cursorclass": pymysql.cursors.DictCursor
+    "host": "database-1.chm6ogy0g0j4.eu-north-1.rds.amazonaws.com",  # Your RDS endpoint
+    "user": "admin",                                                # Your RDS username
+    "password": "Gaurav#Khole",                                       # Your RDS password
+    "database": "database-1",                                         # Your database name
+    "cursorclass": pymysql.cursors.DictCursor,
+    "port": 3306,                                                   # Default MySQL port
+    "connect_timeout": 10                                             # Optional: increase timeout if needed
 }
 
 def get_db_connection():
+    """
+    Returns a new connection to the AWS RDS MySQL database.
+    """
     try:
         conn = pymysql.connect(**db_config)
-        print("Connection successful!")
-        conn.close()
+        st.write("Connection successful!")
+        return conn
     except Exception as e:
-        print("Connection failed:", e)
-    return conn
+        st.error(f"Connection failed: {e}")
+        return None
 
 def create_customer_table():
     create_table_query = """
@@ -54,10 +62,15 @@ def create_customer_table():
     );
     """
     conn = get_db_connection()
+    if conn is None:
+        st.error("Could not connect to the database to create the table.")
+        return
     try:
         with conn.cursor() as cursor:
             cursor.execute(create_table_query)
         conn.commit()
+    except Exception as e:
+        st.error(f"Error creating table: {e}")
     finally:
         conn.close()
 
@@ -73,20 +86,21 @@ if menu == "Create Customer":
         full_name = st.text_input("Full Name")
         date_of_birth = st.date_input("Date of Birth", min_value=datetime(1995, 1, 1))
         gender = st.selectbox("Gender", ["Male", "Female", "Other"])
-        government_id = st.text_input("Government-Issued ID Number",max_chars=15)
+        government_id = st.text_input("Government-Issued ID Number", max_chars=15)
         pan_card = st.text_input("PAN Card (Tax ID)")
         photograph = st.text_input("Photograph URL or Path")
         signature = st.text_input("Signature Sample URL or Path")
         residential_address = st.text_area("Residential Address")
         mailing_address = st.text_area("Mailing Address (if different)")
         mobile_number = st.text_input("Mobile Number", max_chars=10)
-        email_address = st.text_input("Email Address",)
+        email_address = st.text_input("Email Address")
         occupation = st.text_input("Occupation / Job Title")
         employer_name = st.text_input("Employer Name")
         employer_address = st.text_area("Employer Address")
         annual_income = st.number_input("Annual Income / Salary Details", min_value=0.0, format="%.2f")
-        source_of_funds = st.number_input("Source of Funds", min_value=0, step=1)
-        account_purpose = st.selectbox("Purpose of Account",["Salary", "Business","Other"])
+        # If source_of_funds should be a text, change st.number_input to st.text_input.
+        source_of_funds = st.text_input("Source of Funds")
+        account_purpose = st.selectbox("Purpose of Account", ["Salary", "Business", "Other"])
         preferred_account_type = st.selectbox("Preferred Account Type", ["Savings", "Current", "Fixed Deposit"])
         nominee_details = st.text_input("Nominee Details")
         internet_banking = 1 if st.checkbox("Enable Internet Banking") else 0
@@ -113,12 +127,15 @@ if menu == "Create Customer":
                 preferred_account_type, nominee_details, internet_banking, mobile_banking, initial_deposit
             )
             conn = get_db_connection()
-            with conn.cursor() as cursor:
-                cursor.execute(insert_query, values)
-                conn.commit()
-                customer_id = cursor.lastrowid
-            conn.close()
-            st.success(f"Customer created successfully! Customer ID: {customer_id}")
+            if conn:
+                with conn.cursor() as cursor:
+                    cursor.execute(insert_query, values)
+                    conn.commit()
+                    customer_id = cursor.lastrowid
+                conn.close()
+                st.success(f"Customer created successfully! Customer ID: {customer_id}")
+            else:
+                st.error("Failed to connect to the database.")
         except Exception as e:
             st.error(f"Error: {e}")
 
@@ -131,17 +148,21 @@ elif menu == "Search Customer":
         else:
             select_query = "SELECT * FROM Customer WHERE mobile_number = %s"
             conn = get_db_connection()
-            with conn.cursor() as cursor:
-                cursor.execute(select_query, (mobile_number,))
-                customer = cursor.fetchone()
-            conn.close()
-            if customer:
-                if customer.get("date_of_birth"):
-                    customer["date_of_birth"] = customer["date_of_birth"].strftime('%Y-%m-%d')
-                if customer.get("created_at"):
-                    customer["created_at"] = customer["created_at"].strftime('%Y-%m-%d %H:%M:%S')
-                st.subheader("Customer Details")
-                for key, value in customer.items():
-                    st.write(f"**{key.replace('_', ' ').title()}:** {value}")
+            if conn:
+                with conn.cursor() as cursor:
+                    cursor.execute(select_query, (mobile_number,))
+                    customer = cursor.fetchone()
+                conn.close()
+                if customer:
+                    # Format date fields if they exist
+                    if customer.get("date_of_birth"):
+                        customer["date_of_birth"] = customer["date_of_birth"].strftime('%Y-%m-%d')
+                    if customer.get("created_at"):
+                        customer["created_at"] = customer["created_at"].strftime('%Y-%m-%d %H:%M:%S')
+                    st.subheader("Customer Details")
+                    for key, value in customer.items():
+                        st.write(f"**{key.replace('_', ' ').title()}:** {value}")
+                else:
+                    st.warning("Customer not found.")
             else:
-                st.warning("Customer not found.")
+                st.error("Failed to connect to the database.")
