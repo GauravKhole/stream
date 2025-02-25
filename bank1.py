@@ -16,7 +16,13 @@ db_config = {
 }
 
 def get_db_connection():
-    return pymysql.connect(**db_config)
+    try:
+        conn = pymysql.connect(**db_config)
+        print("Connection successful!")
+        conn.close()
+    except Exception as e:
+        print("Connection failed:", e)
+    return conn
 
 def create_customer_table():
     create_table_query = """
