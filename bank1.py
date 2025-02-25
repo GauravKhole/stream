@@ -17,7 +17,7 @@ db_config = {
     "database": "database-1",                                         # Your database name
     "cursorclass": pymysql.cursors.DictCursor,
     "port": 3306,                                                   # Default MySQL port
-    "connect_timeout": 20                                             # Optional: increase timeout if needed
+    "connect_timeout": 10                                             # Optional: increase timeout if needed
 }
 
 def get_db_connection():
