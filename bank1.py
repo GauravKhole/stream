@@ -12,7 +12,7 @@ st.sidebar.image("https://fiaks.com/wp-content/uploads/2019/04/Suryoday-Final-Lo
 # AWS RDS MySQL connection configuration
 db_config = {
     "host": "database-2.chm6ogy0g0j4.eu-north-1.rds.amazonaws.com",  # Your RDS endpoint
-    "user": "admin",                                                # Your RDS username
+    "user": "data",                                                # Your RDS username
     "password": "Gaurav#Khole",                                       # Your RDS password
     "database": "bank_db",                                         # Your database name
     "cursorclass": pymysql.cursors.DictCursor,
